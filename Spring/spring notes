@@ -1,1 +1,3 @@
 Application Context: 
+    In Spring, the ApplicationContext is the core component responsible for managing the objects in your application.
+    It's the heart of Spring's Inversion of Control (IoC) container.
