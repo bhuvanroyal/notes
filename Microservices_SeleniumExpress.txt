@@ -1,0 +1,183 @@
+ ---------Micro Services ----
+
+**Monolithic Application** :
+-->A monolithic application in Spring typically consists of a single large codebase, 
+containing all the necessary components such as controllers, services, data access objects (DAOs), 
+and other business logic components. In a monolithic architecture, all these components are deployed and
+run together as a single application, making it difficult to modify or update individual components without 
+affecting the entire application.
+
+**Microservices**
+-->As a result, many organizations have started adopting microservices architecture, which involves breaking 
+down the monolithic application into smaller, loosely coupled, and independently deployable services that can 
+be scaled and managed more effectively.
+	>>each service has its own server and database
+	>>these services are interlinked with each other by restclient
+	>>if a service gets thousands of requests from users, load balancer will transfer these requests into
+	  multiple copied services(same service )
+
+
+5
+
+************Writing First microservice*********
+
+1>creating spring starter project(employee-service) with
+		->spring web
+		->devtools
+		->mysql driver
+		->data jpa dependecies
+ModelMapper:- which is same as entity, used to return this modelresponse object instead of returning normal entity object
+		  in json
+			-->create a response class in response package with all the fields in normal entity classes,
+			   dont need to declare annotations, this is just mapper class.
+			-->we have to add modelmapper dependecy in POM
+			-->and we have to create the ModelMapper bean in config package by giving @Configuration(class level), 
+			   @Bean(method level) annotations. 
+			-->autowire the ModelAttribute in service class, and map the source entity object to model response object
+			   by using"ModelMapper.map(source,responseobject)
+2>creating address-service same like employee
+	-->here we are giving a foreign key map with emp id from employee table
+	-->and implemented a method to get employeeAddressby emp_id by using @Querey(by writing nativie Sql query)
+	-->then i want to communicate with address-service from employee service
+		--adding an instance field addressResponse in employee responce class
+		--RestTemplate is a class provided by the Spring Framework that makes it easy to make HTTP requests 
+		  to external web services and consume their responses. 
+		--To use RestTemplate in a Spring application, you first need to configure it as a bean in your application config
+	EX:-
+
+	@Autowired
+	private RestTemplate restTemplate;
+	public EmployeeResponse getEmployeeById(int id) {
+		
+		Employee emp= emprepo.findById(id).get();
+		EmployeeResponse empres= modelmapper.map(emp, EmployeeResponse.class);
+		empres.setAddressResponse(restTemplate.getForObject("http://localhost:8080/address/{id}",AddressResponse.class,id));
+		return empres;
+	}
+	
+-->imporoving our code by using RestTemplateBuilder
+	-->giving base url in properties file
+		ex: addressservice.base.url=http://localhost:8080
+	-->create a constructor in service class that will generate resttemplate bean when its invokes
+		public EmployeeService(@Value("${addressservice.base.url}") String baseUrl,RestTemplateBuilder builder){
+			this.restTemplate=builder.rootUri(baseUrl)
+				.build();
+		}
+
+REST TEMPLATE: HTTP request blocks a thread until a response is received.
+
+WEB CLIENT: supports both blocking and non-blocking I/O, as well as the reactive programming model.
+		->to use webClient we have to inject web reactive (web flux) dependency
+		->create a Webclient bean in config 
+			@Bean
+			public WebClient webClient() {
+				return WebClient.builder().baseUrl(baseUrl).build();
+			}
+		->and in the service class
+			webClient.get().uri("address/"+id).retrieve()
+						.bodyToMono(AddressResponse.class).block()
+		->WebClient is a reactive HTTP client that is designed to handle large numbers of requests efficiently.
+
+FEIGN CLIENT: it is by default blocking like restTemplate but it supports async calls with customization.(by using @Async 	      annotation at method level int feign client interface).
+		--> If you are working with a well-defined REST API and want to write clean and maintainable code, then 
+		    Feign may be a better choice.
+		-->Originally given by "NetFlix"
+
+______Making Rest Calls using Feign Client_________
+
+-->spring adopted the openfeign from netflix and given lot of spring features to that
+	"Spring cloud OpenFeign"
+-->we need to add the Openfeign dependency in POM
+-->spring cloud project is not part of spring boot project therefore, we have added (spring cloud version)
+   and spring cloud dependencyManageMent
+-->create an Interface(AddressClient(Feign))
+	EX:- @FeignClient(name="address-servie", url="http://localhost:8080/")
+		public interface AddressClient
+		 {
+			@GetMapping("/address/{empId}")
+			AddressResponse getAddressByEmployeeId(@PathVariable("empId") int id);}
+
+--> LOAD BALANCER <--
+	->Load balancing is the process of distributing traffic among different instances of the same application
+	->Client side load balancer - RIBBON (Which is depricated by spring)
+	->if you want to use Ribbon, change the spring cloud version to "Hoxton.SRS" in POM then add Ribbon dependency
+	->and add the @RibbonClient(service name) in feignClient Interface
+	->then in properties file servicename.list of Servers=http://localhost:8081,http://localhost:8081
+
+-->Client Side Service Discovery
+	-Netflix Eureka
+	-ZooKeeper
+	-Consul
+-->Server Side Service Discovery
+	-NGNIX
+	-AWS ELB
+
+---------Load Balancer and Service Discovery are Two different things-----------
+
+"When we build Microservices and call to another micro service, we need service discovery to find the host and ip info"
+"and if multiple hosts are available the load balancer helps to pick one and make a call in a load balanced way"
+
+-->all microservies will connect to eureka during their start up, and fetch the eureka registry(info about all registered services urls). they further use these urls to connect to each other
+
+
+*******Service Discovery*********
+	->create a new project with eureka server dependency
+	->@EnableEurekaServer at spring boot application
+	->Eureka Server First call during start up (http://localhost:8761/ureka) and call after each 30sec to sync 	    	  up but which is not available so  it produces some exceptions
+	-> to avoid this exceptions in properties file(eureka.client.fetch-registry=false)
+`	->by writing this line you are saying to your discovery service app that, there is no need to register 		  yourself in your discovery server registry
+	  (eureka.client.register-with-eureka=false)
+
+	-->Discovery-Service contains Eureka Server dependency
+	-->other microservices contains Eureka client Dependency(to use this that microservice autometically 	     		   register to the service discovery based on their default port(http://localhost:8761/ureka)
+
+---->What if We change default port in Service Discovery ?
+	->other microservices are not able to register in discovery service
+	->we have add the eureka client-service(eureka.client.service-url.=localhost:5000/eureka)
+	  in all the microservices including servie-discovery
+
+>>Eureka client sends a heart beat in every 30 secs to eureka server
+>>Eureka Server removes the instance if didn't receive any heart beat for 90 secs
+
+-->whenever a micro service is started it will get the entire service registry by hitting (eureka/apps) end point
+-->"Eureka/apps" is a path in Eureka that represents all the services that have registered with Eureka. It
+    provides a list of all the services that are available in the system.
+-->"Eureka/apps/delta" is a path in Eureka that provides a list of the services that have changed since the last
+    time the Eureka client requested the service registry. This is useful for clients that want to stay up-to-date
+    with the latest changes in the system without having to constantly poll the entire registry.
+
+
+Lecture - 8
+
+-->in microservices we don't hardcode the url(like port and ip ) 
+-->if we want to get urls from service discovery dynamically, we have to use DiscoveryClient like this
+	
+		EX:
+		
+		@Autowired
+		DiscoveryClient disccoveryClient
+
+		List<ServiceInstance> instances=discoveryClient.getInstances("address-service");
+		ServiceInstance instance=instances.get(0);
+		String uri=instance.getUri().toString();
+		empres.setAddressResponse(restTemplate.getForObject(uri +"/address-app/api/address/"+id,AddressResponse.class));
+
+-->the above scenario only get 0th position index only, if we have multiple instances then we have to use LoadBalancerClient
+
+		EX:
+		@Autowired
+		LoadBalancerClient loadBalancerClient;
+
+		ServiceInstance instance=loadBalancerClient.choose("address-service");
+		String uri=instance.getUri().toString();
+		String contextPath=instance.getMetadata().get("configPath");
+		empres.setAddressResponse(restTemplate.getForObject(uri +contextPath +"/address/"+id,AddressResponse.class));
+	->we can also make context-path dynamically, for this add meta-data in properties file
+		EX:-
+		eureka.instance.metadata-map.configPath=/address-app/api
+
+-->the above two DiscoveryClient and LoadBalancerClient are both are Low Level code
+	->we can directly call the service based on service name
+	->have to use @LoadBalanced annotation at restClient level (RestTemplate Bean)
+
+		EX:-empres.setAddressResponse(restTemplate.getForObject("http://address-service/address-app/api/address/"+id,AddressResponse.class));

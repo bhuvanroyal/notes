@@ -1,0 +1,4 @@
+Maven :
+	-> project management tool
+	->Automates repetitive tasks like compiling source code, packaging the application, and running tests
+	->Manages dependencies by downloading required libraries (JAR files) from a central repository or a local repository. 		  This ensures everyone working on the project uses the same versions of libraries and avoids conflicts.

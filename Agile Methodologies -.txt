@@ -1,0 +1,54 @@
+Agile Methodologies :- (The word ‘agile’ refers to the ability to move quickly and easily.)
+	-Agile methodology is a project management approach that prioritizes cross-functional collaboration and continuous improvement. It divides projects 	 into smaller phases and guides teams through cycles of planning, execution, and evaluation.
+	-Agile project management is a process for managing a project that involves constant collaboration and working in iterations. It works off the basis 	 that a project can be continuously improved upon throughout its life cycle and adapt to changes quickly.
+	-The four principles of Agile are: individuals and interactions, working software, customer collaboration, and responding to change. An example of an 	 Agile method is Scrum.
+
+Different types of agile frameworks:
+	- Kanban
+	- Scrum
+	- Extreme Programming
+	- Feature Driven development
+	- Dynamic System Development Method
+	- Crystal
+	- Lean
+--Scrum--:
+	-Scrum is one of the most popular Agile methodologies, as it can bring teams together with a sharp focus and an efficient, collaborative approach to 	 task execution.
+	-Scrum focuses on breaking a project down into sprints and only planning and managing one sprint at a time.
+	-Under this methodology, you would assign a Scrum leader and product owner, who have a direct influence over the rest of the team.
+
+
+What are the Benefits of Agile?
+	:The client is also involved throughout the development process and can recommend changes depending on the market. This ensures that the overall 	 quality of the final product is greater and is a win-win for both the business and the clients.
+	:in Agile, the customer is involved throughout the entire decision-making process. As the customer is always in the loop, changes can be made based on 	 their feedback.
+	:Since Agile methodology works on the concept of small sprints, there is enough time to come up with effective mitigation plans in case things don't 	 go as planned. 
+
+
+Members of Scrum Team : 
+	-Product Owner
+		-A product owner is an individual responsible for understanding what the customer/ clients and to determine the business value of those 		 wants. 
+		-The product owner takes decisions required to complete the project and manages the project backlog. 
+	-Scrum Master
+		-The Scrum Master makes sure the team is accountable for achieving the organization's business goals and removing impediments that may 			 decrease the team's productivity. 
+		-He/ She also helps the team adopt Scrum methodologies. 
+	-Scrum Team
+		-The Scrum team is a collection of individuals that work together to deliver the requirements of the stakeholders and clients.
+
+
+
+Product Backlog :The product backlog consists of a list of new features, the changes made to existing features, bug fixes, changes to the infrastructure, 		and other artifacts that need to be completed to ensure the team satisfies a particular requirement. It is a source of all things the team 		works on. 
+Sprint Planning :During this stage, the team determines the tasks from the product backlog that they want to work towards completing during the sprint
+
+Sprint Backlog :The tasks discussed during the sprint planning are added to the sprint backlog
+
+Scrum Team     :The Scrum team (usually consists of 5 to 9 members) works on the tasks mentioned in the sprint backlog.
+
+Daily Scrum:  The team will have daily Scrum meetings, which are 15-minute sessions, during which the team members synchronize their activities and plan 	      their activities for the day.
+
+Sprint Review :After a sprint is completed, a sprint review takes place. Involving the team, scrum master, product owner, and stakeholders, the sprint 	    		review shows what the team accomplished during the sprint. During the meeting, questions are asked, observations are made, feedback and 		suggestions are also given. 
+
+
+
+
+
+
+

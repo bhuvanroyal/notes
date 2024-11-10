@@ -1,0 +1,10 @@
+opening cmd promt from kafka folder
+to start zookeeper -  .\bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+kafka - .\bin\windows\kafka-server-start.bat .\config\server.properties
+
+creating a topic :- \bin\windows>kafka-topics.bat --create --bootstrap-server localhost:9092  --topic test
+
+producer :bin\windows>kafka-console-producer.bat --broker-list localhost:9092 --topic test
+>{"name":"bhuvan"}
+
+consumer :bin\windows>kafka-console-consumer.bat --topic test --bootstrap-server localhost:9092 --from-beginning

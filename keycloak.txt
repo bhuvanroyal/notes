@@ -1,0 +1,9 @@
+keycloak:
+	-->it is an open source product which allows SSO with identity and access management
+	-->Centralized management of users
+	-->It is developed using Java
+	-->it provides adapter to integrate with Spring boot
+
+OpenID Connect (OIDC) is an authentication protocol that is an extension of OAuth 2.0. While OAuth 2.0 is only a framework for building authorization protocols and is mainly incomplete, OIDC is a full-fledged authentication and authorization protocol.
+
+-->keycloak by default look for the Json configuration file, to make it from properties we have to create a bean with KeycloakConfigResolver

@@ -1,0 +1,95 @@
+--->creating a simple limit service to set minimum and maximum values from properties file
+	->in the properties specify the values of limit-service.minimum=2 limit-service.maxmum=889
+	->then create a configuration class with @Component and @ConfigurationProperties("limit-service") annotations
+		-> in this class generate getters and setters for minimum and maximum values
+
+----SPRING CLOUD CONFIG SERVER----
+	->Spring Cloud Config Server is a component of the Spring Cloud framework that provides centralized configuration management for microservices-based applications
+	->such as database connection settings, API keys, and feature flags, to a central configuration server.
+	->Microservices can fetch configuration properties from the Config Server at runtime, which enables dynamic configuration updates without the need to restart or redeploy microservices
+	->This spring cloud config server pointing to the git repo where configurations are stored and fetchs accordingly
+
+(((and the finally)))-config-server has the config server dependency and microservices have the cloud-starter-config dependency
+	->config server has git repo uri for fetch the configuration from git
+	->microservices have the config-server uri to fetch the configuration
+	->the configuration will apply dynamically to microservices we can get those data by @Value annotation
+
+
+------Spring Cloud API GATEWAY----------
+
+->Spring Cloud API Gateway is primarily used as a central entry point for all API requests, providing a single point of entry for routing and managing incoming requests.
+->these features are include
+	-Routing and Filtering
+	-Service Discovery and loadbalancing
+	-Security
+		-Authentication and authorization for incoming requests
+		-it supports OAuth2, JWT, and Basic Authentication.
+	-Circuit brakers
+		-The Gateway can detect failures in backend services and can automatically break the circuit, 
+		  preventing further requests to the failing service.
+	-Rate Limiting: 
+		-Developers can configure rate limits on incoming requests to prevent overloading backend services.
+
+ <-IMPLEMENTATION->
+	-create a service with devtools,actuator, gateway,eureka discovery client dependencies
+	-and then adding this property in properties file(spring.cloud.gateway.discovery.locator.enabled=true)
+	 server.port=8765
+	-now we can access other microservices rest apis through this gateway(8765)
+	-Route locator : which is an interface by using this we can manually route the services in api gateway
+		->for this 	we need to create a api gateway configuration class(@configuration)
+		->create a bean with RoutLocator object and implementing builder.routes(p->p.path("/limits") etc..
+	-RouteLocatorBuilder can be used to create the DSL and add filters and other configuration options to the 		routes. The RouteLocator bean can then be registered with the Spring application context.
+	- if we write custom routeLocator then dont need to to write that above discovery.locator property
+--LOGGING FILTER--
+	-a logging filter is a feature that allows you to specify criteria for logging API requests and responses based 	 on specific attributes of the request or response.
+	- you might create a logging filter that logs only requests with a certain HTTP method, such as GET or POST, or 	  only responses with a specific status code, such as 200 OK or 404 Not Found.
+	@Component
+	public class LoginFilter implements GlobalFilter{
+	private Logger logger=LoggerFactory.getLogger(LoginFilter.class);
+	@Override
+	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		// TODO Auto-generated method stub
+		logger.info("Path of the request received -> {}",exchange.getRequest().getPath());
+		return chain.filter(exchange);
+	}
+
+-----CIRCUIT BREAKER-------
+
+	->In a distributed system, when one service fails, it can cause other services to fail as well due to cascading    	  failures.
+	-> If the service fails frequently, the Circuit Breaker trips and starts returning a fallback response instead 	   of forwarding the requests to the service. 
+	->This fallback response can be a default value or a cached response.
+	->The Circuit Breaker pattern consists of three states:	
+		1>Closed: when the service is operating normally, and all requests are forwarded to the service.
+		2>Open: When the service fails repeatedly, the Circuit Breaker trips and enters the open state. In this 		  state, all requests are blocked, and the fallback response is returned.
+		3>Half-Open:where a limited number of requests are allowed to pass through to the service to check if it 		  has recovered. If the service responds successfully, the Circuit Breaker returns to the closed state, 		  and if it fails, it re-enters the open state.
+	<--Implementation-->
+	-lets take a any micro service and add the dependencies (actuator,aop,resillience4j)
+	-@Retry(name="sample-api" : If the failure was due to a temporary issue, @Retry can be used to retry the call 	 after a short delay to see if the service has recovered.
+		*it will retry the call by default 3 times if it fails then it will returns an error back
+		*we can also set a specific number of retrival intervals by properties
+			-resilience4j.retry.instances.sample-api.maxRetryAttempts=5
+		* we can also set a fallback response in @Retry annotation
+			@Retry(name="sample-api" fallbackMethod="hardcodeMethod")
+		*then write that hardcodeMethod and taking paramater as "Exception ex"
+			public String hardcodeMethod(Exception ex){
+				retur "fallback response"}
+		*we can also configure wait duration for each call
+			-resilience4j.retry.instances.sample-api.waitDuration=1s
+			then,another feature
+			-resilience4j.retry.instances.sample-api.enableExponentialBackoff=true
+				>each subsequest request is taking longer time like 1,2,4,8.....
+	-@CircuitBreaker :@CircuitBreaker is used to prevent repeated failures from impacting the system's stability by 	 breaking the circuit and failing fast. When a method is annotated with @CircuitBreaker, Resilience4j will 	 	 monitor the number of failures and open the circuit if the failure rate exceeds a certain threshold.
+		->Once the circuit is open, calls to the method will immediately fail and an exception will be thrown, 		  without actually executing the method.
+	-@RateLimiter :
+		- It can be used to limit the number of invocations of a particular method in a given period of time.
+		-If the limit has been reached, the call will be rejected and an exception will be thrown. If the limit 		 has not been reached, the call will proceed as normal.
+	    >>>>>yml  configuration
+		resilience4j:
+  		 rate-limiter:
+   		  instances:
+      	   myServiceRateLimiter:
+       	    limitForPeriod: 5
+       	     limitRefreshPeriod: 1s
+	-@BulkHead
+
+
